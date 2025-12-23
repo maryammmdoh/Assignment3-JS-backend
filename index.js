@@ -20,10 +20,10 @@ const server = http.createServer((req, res) => {
         req.on("end", () => {
             // Parse the received data
             body = JSON.parse(body);
-            const { Email } = body;
+            const { email } = body;
             // Check if user with the same email already exists
             const user = users.find((data) => {
-                return Email == data.Email;
+                return email == data.email;
             });
 
             // If user exists, return an error response
@@ -32,17 +32,34 @@ const server = http.createServer((req, res) => {
                 res.write('{"message": "User Already Exist"}');
                 return res.end();
             }
+
+            let newID = 1;
+            if(users.length > 0) {
+                const lastUser = users.reduce((max, user) => {
+                    const userID = parseInt(user.id);
+                    return userID > max ? userID : max;
+                }, 0);
+                newID = lastUser + 1;
+            }
+            const newUser = { id: newID, ...body };
             // If user does not exist, add the new user to the users array
-            users.push(body);
+            users.push(newUser);
             // Write the updated users array back to the JSON file
-            fs.writeFileSync(path.resolve("./users.json"), JSON.stringify(users) , "utf-8");
+            // fs.writeFile(usersFilePath, JSON.stringify(users) );
+            fs.writeFile(usersFilePath, JSON.stringify(users), (err) => {
+                if (err) {
+                    res.writeHead(500, { "Content-Type": "application/json" });
+                    res.end(JSON.stringify({ message: "Failed to save user" }));
+                    return;
+                }
+            });
             res.writeHead(200, { "Content-Type": "application/json" });
-            res.write('{"message": "User Added Successfully"}');
+            res.write(JSON.stringify({ message: "User Added Successfully", user: newUser }));
             return res.end();
         });
     }
-    // updates an existing user's name, age, or email by their ID
-    else if(url.includes("/Updateuser") && method == "PATCH") {
+    // updates an existing user's name, age, or email by their id
+    else if(url.includes("/Updateuser/") && method == "PATCH") {
         let body = "";
         //Be sure to collect all the data
         req.on("data", (chunk) => (body += chunk));
@@ -50,41 +67,61 @@ const server = http.createServer((req, res) => {
         req.on("end", () => {
             // Parse the received data
             body = JSON.parse(body);
-            const { Email, Password, Age } = body;
-            // Extract ID from URL
+            const { email, password, age } = body;
+            // Extract id from URL
             const id = url.split("/")[2];
-            // Find the index of the user with the given ID
-            const user = users.find((value) => value.ID == id);
+            // Find the index of the user with the given id
+            const user = users.find((value) => value.id == id);
             if(!user) {
                 res.writeHead(400,{"content-type" : "application/json"});
-                res.write(JSON.stringify({message : "User ID Not Found"}));
+                res.write(JSON.stringify({message : "User id Not Found"}));
                 return res.end();
             }
+
+            // Check if the new email already exists for another user 
+            if(email && users.some((user,index) => user.email === email && index !== id)) {
+                res.writeHead(404,{"content-type" : "application/json"});
+                res.write(JSON.stringify({message : "Email already exists"}));
+                return res.end();
+            }
+
             // Update user details
-            if(Email) user.Email = Email;
-            if(Password) user.Password = Password;
-            if(Age) user.Age = Age;
+            if(email) user.email = email;
+            if(password) user.password = password;
+            if(age) user.age = age;
 
             // Write the updated users array back to the JSON file
-            fs.writeFileSync(path.resolve("./users.json"), JSON.stringify(users) , "utf-8");
+            fs.writeFile(usersFilePath, JSON.stringify(users), (err) => {
+                if (err) {
+                    res.writeHead(500, { "Content-Type": "application/json" });
+                    res.end(JSON.stringify({ message: "Failed to save user" }));
+                    return;
+                }
+            });
             res.writeHead(200, { "Content-Type": "application/json" });
-            res.write('{"message": "User Updated Successfully"}');
+            res.write(JSON.stringify({ message: "User Updated Successfully", user: user }));
             return res.end();
         })
     } 
-    // Delete a user by ID
-    else if(url.includes("/Deleteuser") && method == "DELETE") {
-        // Extract ID from URL
+    // Delete a user by id
+    else if(url.includes("/Deleteuser/") && method == "DELETE") {
+        // Extract id from URL
         const id = url.split("/")[2];
-        const userIndex = users.findIndex((value) => value.ID == id);
+        const userIndex = users.findIndex((value) => value.id == id);
         if(userIndex == -1) {
             res.writeHead(400,{"content-type" : "application/json"});
-            res.write(JSON.stringify({message : "User ID Not Found"}));
+            res.write(JSON.stringify({message : "User id Not Found"}));
             return res.end();
         }
         // Splice user to delete user
         users.splice(userIndex,1);
-        fs.writeFileSync(path.resolve(usersFilePath), JSON.stringify(users) , "utf-8");
+        fs.writeFile(usersFilePath, JSON.stringify(users), (err) => {
+                if (err) {
+                    res.writeHead(500, { "Content-Type": "application/json" });
+                    res.end(JSON.stringify({ message: "Failed to save user" }));
+                    return;
+                }
+            });
         res.writeHead(200, { "Content-Type": "application/json" });
         res.write(JSON.stringify({ message: "User deleted successfully", users: users }));
         return res.end();
@@ -95,14 +132,14 @@ const server = http.createServer((req, res) => {
         res.write(JSON.stringify({ message: "All users retrieved successfully", users: users }));
         return res.end();
     }
-    // Get user by ID
-    else if (url.includes("/Getuserbyid") && method == "GET") {
-        // Extract ID from URL
+    // Get user by id
+    else if (url.includes("/Getuserbyid/") && method == "GET") {
+        // Extract id from URL
         const id = url.split("/")[2];
-        const user = users.find((value) => value.ID == id);
-        if(!user) {
+        const user = users.find((value) => value.id == id);
+        if(user == -1 || !user) {
             res.writeHead(400,{"content-type" : "application/json"});
-            res.write(JSON.stringify({message : "User ID Not Found"}));
+            res.write(JSON.stringify({message : "User id Not Found"}));
             return res.end();
         }
         res.writeHead(200, { "Content-Type": "application/json" });

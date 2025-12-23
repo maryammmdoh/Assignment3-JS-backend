@@ -1,6 +1,10 @@
 [
-  { "ID": 1, "Email": "maryam@gmail.com", "Password": "M_123", "Age": 25 },
-  { "ID": 2, "Email": "ahmed@gmail.com", "Password": "A_456", "Age": 30 },
-  { "ID": 3, "Email": "nour@gmail.com", "Password": "N_123", "Age": 20 },
-  { "ID": 4, "Email": "zeyad@gmail.com", "Password": "Z_123", "Age": 25 }
+  { "id": 1, "email": "maryam@gmail.com", "password": "M_123", "age": 25 },
+  { "id": 2, "email": "ahmed@gmail.com", "password": "A_456", "age": 30 },
+  { "id": 3, "email": "nour@gmail.com", "password": "N_123", "age": 20 },
+  { "id": 4, "email": "zeyad@gmail.com", "password": "Z_123", "age": 25 },
+  { "id": 5, "email": "newuser@gmail.com", "password": "NU_123", "age": 30 },
+  { "id": 6, "email": "newuser2@gmail.com", "password": "NU_456", "age": 30 },
+  { "id": 7, "email": "newuser4@gmail.com", "password": "NU_789", "age": 25 },
+  { "id": 8, "email": "newuser6@gmail.com", "password": "NU_789", "age": 25 }
 ]
